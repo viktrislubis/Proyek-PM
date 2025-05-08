@@ -3,61 +3,72 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Ridge  # Menggunakan Ridge untuk regularisasi
 from sklearn.cluster import KMeans
 from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
 
 app = Flask(__name__)
 
 # Load data
 data = pd.read_csv('Data_Tanaman_Padi_Sumatera_version_1.csv')
 
-# Step 1: Clean outliers (remove extreme values in Produksi)
+# Step 1: Clean outliers with stricter threshold
 Q1 = data['Produksi'].quantile(0.25)
 Q3 = data['Produksi'].quantile(0.75)
 IQR = Q3 - Q1
-data = data[~((data['Produksi'] < (Q1 - 1.5 * IQR)) | (data['Produksi'] > (Q3 + 1.5 * IQR)))]
+data = data[~((data['Produksi'] < (Q1 - 2.0 * IQR)) | (data['Produksi'] > (Q3 + 2.0 * IQR)))]
 
-# Step 2: Add new features (Provinsi as dummy variables and interaction term)
+# Step 2: Feature engineering
 data = pd.get_dummies(data, columns=['Provinsi'], drop_first=True)
 data['Hujan_Kelembapan'] = data['Curah hujan'] * data['Kelembapan']
+data['Luas_Hujan_Ratio'] = data['Luas Panen'] / (data['Curah hujan'] + 1)  # Hindari divisi nol
+data['Suhu_Squared'] = data['Suhu rata-rata'] ** 2
+data['Luas_Suhu_Interaction'] = data['Luas Panen'] * data['Suhu rata-rata']
 
 # Prepare features and target
 provinsi_columns = [col for col in data.columns if col.startswith('Provinsi_')]
-feature_columns = ['Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata', 'Hujan_Kelembapan'] + provinsi_columns
+feature_columns = ['Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata', 'Hujan_Kelembapan', 
+                   'Luas_Hujan_Ratio', 'Suhu_Squared', 'Luas_Suhu_Interaction'] + provinsi_columns
 X = data[feature_columns]
-y = data['Produksi']
+y = np.log1p(data['Produksi'])  # Transformasi log untuk stabilisasi varians
 
-# Normalize the features
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+# Preprocessor dan model regresi
+reg_preprocessor = ColumnTransformer([
+    ('num', StandardScaler(), ['Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata', 'Hujan_Kelembapan', 
+                              'Luas_Hujan_Ratio', 'Suhu_Squared', 'Luas_Suhu_Interaction']),
+    ('cat', 'passthrough', provinsi_columns)
+])
+model = Pipeline([
+    ('preprocessor', reg_preprocessor),
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)),  # Hindari bias berlebih
+    ('regressor', Ridge(alpha=1.0))  # Ridge untuk regularisasi
+])
 
 # Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model.fit(X_train, y_train)
 
-# Step 3: Hyperparameter tuning for Random Forest
-param_grid = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [None, 10, 20, 30],
-    'min_samples_split': [2, 5, 10]
-}
-rf = RandomForestRegressor(random_state=42)
-grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, scoring='neg_mean_absolute_error', n_jobs=-1)
-grid_search.fit(X_train, y_train)
-
-# Best model
-model = grid_search.best_estimator_
-print("Best Parameters:", grid_search.best_params_)
-
-# Evaluate model
-y_pred = model.predict(X_test)
-mae = mean_absolute_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
-print(f"Mean Absolute Error: {mae}")
-print(f"R² Score: {r2}")
+# Evaluate model (transform back to original scale)
+y_pred_log = model.predict(X_test)
+y_pred = np.expm1(y_pred_log)
+y_test_orig = np.expm1(y_test)
+mae = mean_absolute_error(y_test_orig, y_pred)
+r2 = r2_score(y_test_orig, y_pred)
+print(f"Linear Regression with Ridge - Mean Absolute Error: {mae}")
+print(f"Linear Regression with Ridge - R² Score: {r2}")
 
 # Clustering for categorization
-kmeans = KMeans(n_clusters=3, random_state=42)
+cluster_preprocessor = ColumnTransformer([
+    ('num', StandardScaler(), ['Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata', 'Hujan_Kelembapan', 
+                              'Luas_Hujan_Ratio', 'Suhu_Squared', 'Luas_Suhu_Interaction']),
+    ('cat', 'passthrough', provinsi_columns)
+])
+X_scaled = cluster_preprocessor.fit_transform(X)
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
 data['Cluster'] = kmeans.fit_predict(X_scaled)
 
 # Define categories based on cluster means
@@ -73,11 +84,7 @@ def intro():
 # Route untuk form dan prediksi
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
-    # Daftar provinsi statis (semua provinsi di Sumatera)
-    provinsi_list = [
-        'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Jambi',
-        'Sumatera Selatan', 'Bengkulu', 'Lampung'
-    ]
+    provinsi_list = ['Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Jambi', 'Sumatera Selatan', 'Bengkulu', 'Lampung']
     tahun_list = sorted(data['Tahun'].unique())
     show_result = False
     prediction = None
@@ -100,7 +107,10 @@ def predict():
                 'Curah hujan': [hujan],
                 'Kelembapan': [kelembapan],
                 'Suhu rata-rata': [suhu],
-                'Hujan_Kelembapan': [hujan * kelembapan]
+                'Hujan_Kelembapan': [hujan * kelembapan],
+                'Luas_Hujan_Ratio': [luas / (hujan + 1)],
+                'Suhu_Squared': [suhu ** 2],
+                'Luas_Suhu_Interaction': [luas * suhu]
             })
 
             # Add dummy variables for Provinsi
@@ -111,17 +121,14 @@ def predict():
             # Ensure input_data has the same columns as X
             input_data = input_data[feature_columns]
 
-            # Normalize input data
-            input_scaled = scaler.transform(input_data)
-
-            # Predict production
-            prediction = model.predict(input_scaled)[0]
+            # Predict production (transform back to original scale)
+            prediction_log = model.predict(input_data)[0]
+            prediction = np.expm1(prediction_log)
 
             # Predict cluster
-            cluster = kmeans.predict(input_scaled)[0]
+            cluster_input = cluster_preprocessor.transform(input_data)
+            cluster = kmeans.predict(cluster_input)[0]
             cluster_label = cluster_labels[cluster]
-
-            # Calculate average production for the cluster
             avg_cluster_prod = data[data['Cluster'] == cluster]['Produksi'].mean()
 
             show_result = True
