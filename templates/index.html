@@ -25,7 +25,7 @@
           />
           <h1>Prediksi Produksi Padi</h1>
         </div>
-        <form method="POST">
+        <form method="POST" action="{{ url_for('predict') }}">
           <label for="provinsi">Provinsi:</label>
           <select name="provinsi" id="provinsi" required>
             {% for prov in provinsi_list %}

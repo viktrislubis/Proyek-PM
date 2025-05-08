@@ -65,8 +65,14 @@ cluster_means = data.groupby('Cluster')['Produksi'].mean().sort_values()
 cluster_labels = {cluster_means.index[0]: 'Rendah', cluster_means.index[1]: 'Sedang', cluster_means.index[2]: 'Tinggi'}
 data['Kategori'] = data['Cluster'].map(cluster_labels)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+# Route untuk halaman pengantar
+@app.route('/')
+def intro():
+    return render_template('dashboard.html', mae=mae, r2=r2)
+
+# Route untuk form dan prediksi
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
     # Daftar provinsi statis (semua provinsi di Sumatera)
     provinsi_list = [
         'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Jambi',

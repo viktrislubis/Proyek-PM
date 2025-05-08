@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prediksi Produksi Padi</title>
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='ikon_padi.ico') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <style>
+      body {
+        background: url("{{ url_for('static', filename='image1.jpg') }}")
+          no-repeat center center fixed;
+        background-size: cover;
+      }
+      .intro-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        text-align: center;
+        margin: 50px auto;
+      }
+      .intro-container h1 {
+        font-size: 32px;
+        color: #2e86ab;
+        margin-bottom: 20px;
+      }
+      .intro-container p {
+        font-size: 16px;
+        color: #34495e;
+        margin-bottom: 15px;
+      }
+      .intro-container .btn {
+        background-color: #2e86ab;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+      }
+      .intro-container .btn:hover {
+        background-color: #21618c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="intro-container">
+      <h1>Prediksi Produksi Padi</h1>
+      <p>
+        Selamat datang di aplikasi prediksi produksi padi berbasis machine
+        learning! Aplikasi ini menggunakan model Random Forest untuk memprediksi
+        produktivitas padi di wilayah Sumatera berdasarkan faktor lingkungan
+        seperti luas panen, curah hujan, kelembapan, dan suhu rata-rata.
+      </p>
+      <p>Model kami memiliki performa yang baik dengan:</p>
+      <p><strong>Mean Absolute Error (MAE):</strong> {{ mae|round(2) }}</p>
+      <p><strong>R² Score:</strong> {{ r2|round(2) }}</p>
+      <p>Klik tombol di bawah untuk memulai prediksi.</p>
+      <a href="{{ url_for('predict') }}" class="btn">Mulai Prediksi 🌾</a>
+    </div>
+  </body>
+</html>
