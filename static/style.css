@@ -1,0 +1,200 @@
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #e0f7fa;
+  overflow-x: hidden;
+}
+
+.container {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  margin-top: 20px;
+  overflow: visible;
+}
+
+.logo {
+  width: 80px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #2e86ab;
+  margin: 0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+label {
+  font-size: 14px;
+  display: block;
+  margin: 10px 0 5px;
+  text-align: left;
+  color: #34495e;
+}
+
+select,
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #3498db;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+select:focus,
+input:focus {
+  border-color: #2e86ab;
+  outline: none;
+  box-shadow: 0 0 5px rgba(46, 134, 171, 0.5);
+}
+
+button {
+  background-color: #2e86ab;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #21618c;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #eaf4f4;
+  border: 2px solid #3498db;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background-color: white;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background-color: #2e86ab;
+  color: white;
+}
+
+.error {
+  color: #e74c3c;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.footer {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("ikon_padi.png") no-repeat center;
+  background-size: contain;
+  opacity: 0.1;
+  filter: blur(5px);
+  z-index: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Responsif */
+@media (max-width: 480px) {
+  .container {
+    width: 95%;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .logo {
+    width: 60px;
+    margin-bottom: 8px;
+  }
+
+  label {
+    font-size: 12px;
+  }
+
+  select,
+  input {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .footer {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .logo {
+    width: 50px;
+  }
+}
