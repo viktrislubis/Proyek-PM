@@ -3,13 +3,14 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import Ridge  # Menggunakan Ridge untuk regularisasi
+from sklearn.linear_model import Ridge  
 from sklearn.cluster import KMeans
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
 
 app = Flask(__name__)
 
@@ -34,7 +35,7 @@ provinsi_columns = [col for col in data.columns if col.startswith('Provinsi_')]
 feature_columns = ['Luas Panen', 'Curah hujan', 'Kelembapan', 'Suhu rata-rata', 'Hujan_Kelembapan', 
                    'Luas_Hujan_Ratio', 'Suhu_Squared', 'Luas_Suhu_Interaction'] + provinsi_columns
 X = data[feature_columns]
-y = np.log1p(data['Produksi'])  # Transformasi log untuk stabilisasi varians
+y = np.log1p(data['Produksi'])  
 
 # Preprocessor dan model regresi
 reg_preprocessor = ColumnTransformer([
@@ -44,8 +45,8 @@ reg_preprocessor = ColumnTransformer([
 ])
 model = Pipeline([
     ('preprocessor', reg_preprocessor),
-    ('poly', PolynomialFeatures(degree=2, include_bias=False)),  # Hindari bias berlebih
-    ('regressor', Ridge(alpha=1.0))  # Ridge untuk regularisasi
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)),  
+    ('regressor', Ridge(alpha=1.0))  
 ])
 
 # Split data into training and testing sets
@@ -58,8 +59,11 @@ y_pred = np.expm1(y_pred_log)
 y_test_orig = np.expm1(y_test)
 mae = mean_absolute_error(y_test_orig, y_pred)
 r2 = r2_score(y_test_orig, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test_orig, y_pred))
+
 print(f"Linear Regression with Ridge - Mean Absolute Error: {mae}")
 print(f"Linear Regression with Ridge - R² Score: {r2}")
+print(f"Linear Regression with Ridge - RMSE: {rmse}")
 
 # Clustering for categorization
 cluster_preprocessor = ColumnTransformer([
@@ -79,7 +83,7 @@ data['Kategori'] = data['Cluster'].map(cluster_labels)
 # Route untuk halaman pengantar
 @app.route('/')
 def intro():
-    return render_template('dashboard.html', mae=mae, r2=r2)
+    return render_template('dashboard.html', mae=mae, r2=r2, rmse=rmse)
 
 # Route untuk form dan prediksi
 @app.route('/predict', methods=['GET', 'POST'])
@@ -136,9 +140,18 @@ def predict():
         except Exception as e:
             error = f"Error: {str(e)}"
 
-    return render_template('index.html', provinsi_list=provinsi_list, tahun_list=tahun_list,
-                           show_result=show_result, prediction=prediction, cluster_label=cluster_label,
-                           avg_cluster_prod=avg_cluster_prod, error=error)
+    return render_template('index.html',
+                       provinsi_list=provinsi_list,
+                       tahun_list=tahun_list,
+                       show_result=show_result,
+                       prediction=prediction,
+                       cluster_label=cluster_label,
+                       avg_cluster_prod=avg_cluster_prod,
+                       error=error,
+                       mae=mae,
+                       r2=r2,
+                       rmse=rmse)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

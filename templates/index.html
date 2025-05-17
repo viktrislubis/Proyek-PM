@@ -77,11 +77,27 @@
             </tr>
           </table>
         </div>
+
+        <div class="result">
+          <h3>Akurasi Model</h3>
+          <table>
+            <tr>
+              <th>Mean Absolute Error (MAE)</th>
+              <th>R² Score</th>
+              <th>Root Mean Squared Error (RMSE)</th>
+            </tr>
+            <tr>
+              <td>{{ mae|round(2) }}</td>
+              <td>{{ r2|round(4) }}</td>
+              <td>{{ rmse|round(2) }}</td>
+            </tr>
+          </table>
+        </div>
         {% endif %} {% if error %}
         <div class="error">{{ error }}</div>
         {% endif %}
 
-        <div class="footer">© Proyek PM - IT Del</div>
+        <div class="footer">© Proyek PM Kelompok 5 - IT Del</div>
       </div>
     </div>
   </body>
